@@ -1,0 +1,11 @@
+alpha:
+  listen: 127.0.0.1:22121
+  hash: fnv1a_64
+  distribution: random
+  auto_eject_hosts: true
+  redis: false
+  server_retry_timeout: 2000
+  server_failure_limit: 1
+  servers:
+   - 127.0.0.1:11212:1 server1
+   - 127.0.0.1:11213:1 server2

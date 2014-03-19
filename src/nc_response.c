@@ -229,6 +229,7 @@ rsp_forward(struct context *ctx, struct conn *s_conn, struct msg *msg)
     s_conn->dequeue_outq(ctx, s_conn, pmsg);
     pmsg->done = 1;
 
+    log_error("AT peer matching %d to %d", msg->id, pmsg->id);
     /* establish msg <-> pmsg (response <-> request) link */
     pmsg->peer = msg;
     msg->peer = pmsg;
@@ -292,8 +293,13 @@ rsp_send_next(struct context *ctx, struct conn *conn)
         return NULL;
     }
 
+    log_error("pmsg id %d", pmsg->id);
+    log_error("pmsg swallow %d", pmsg->swallow);
+    log_error("pmsg request %d", pmsg->request);
+
     msg = conn->smsg;
     if (msg != NULL) {
+      log_error("msg was not null %d", msg->id);
         ASSERT(!msg->request && msg->peer != NULL);
         ASSERT(req_done(conn, msg->peer));
         pmsg = TAILQ_NEXT(msg->peer, c_tqe);
@@ -303,6 +309,11 @@ rsp_send_next(struct context *ctx, struct conn *conn)
         conn->smsg = NULL;
         return NULL;
     }
+
+    log_error("pmsg id %d", pmsg->id);
+    log_error("pmsg swallow %d", pmsg->swallow);
+    log_error("pmsg request %d", pmsg->request);
+
     ASSERT(pmsg->request && !pmsg->swallow);
 
     if (req_error(conn, pmsg)) {
@@ -317,11 +328,13 @@ rsp_send_next(struct context *ctx, struct conn *conn)
     } else {
         msg = pmsg->peer;
     }
+      log_error("here4");
     ASSERT(!msg->request);
+      log_error("here5");
 
     conn->smsg = msg;
 
-    log_debug(LOG_VVERB, "send next rsp %"PRIu64" on c %d", msg->id, conn->sd);
+    log_error("send next rsp %"PRIu64" on c %d", msg->id, conn->sd);
 
     return msg;
 }
@@ -334,7 +347,7 @@ rsp_send_done(struct context *ctx, struct conn *conn, struct msg *msg)
     ASSERT(conn->client && !conn->proxy);
     ASSERT(conn->smsg == NULL);
 
-    log_debug(LOG_VVERB, "send done rsp %"PRIu64" on c %d", msg->id, conn->sd);
+    log_error("send done rsp %"PRIu64" on c %d", msg->id, conn->sd);
 
     pmsg = msg->peer;
 

@@ -49,6 +49,7 @@ struct conn {
     struct msg_tqh     omsg_q;        /* outstanding request Q */
     struct msg         *rmsg;         /* current message being rcvd */
     struct msg         *smsg;         /* current message being sent */
+    struct msg         *dup_msg;
 
     conn_recv_t        recv;          /* recv (read) handler */
     conn_recv_next_t   recv_next;     /* recv next message handler */

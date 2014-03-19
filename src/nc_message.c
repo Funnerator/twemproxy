@@ -255,6 +255,7 @@ done:
     msg->first_fragment = 0;
     msg->last_fragment = 0;
     msg->swallow = 0;
+    msg->duplicate= 0;
     msg->redis = 0;
 
     return msg;
@@ -638,6 +639,7 @@ msg_recv_chain(struct context *ctx, struct conn *conn, struct msg *msg)
 
     for (;;) {
         status = msg_parse(ctx, conn, msg);
+
         if (status != NC_OK) {
             return status;
         }
@@ -682,6 +684,9 @@ msg_recv(struct context *ctx, struct conn *conn)
 static rstatus_t
 msg_send_chain(struct context *ctx, struct conn *conn, struct msg *msg)
 {
+
+    log_error("IN SEND CHAIN");
+
     struct msg_tqh send_msgq;            /* send msg q */
     struct msg *nmsg;                    /* next msg */
     struct mbuf *mbuf, *nbuf;            /* current and next mbuf */
@@ -715,6 +720,7 @@ msg_send_chain(struct context *ctx, struct conn *conn, struct msg *msg)
              mbuf != NULL && array_n(&sendv) < NC_IOV_MAX && nsend < limit;
              mbuf = nbuf) {
             nbuf = STAILQ_NEXT(mbuf, next);
+            log_error("mbuff empty %d", mbuf_empty(mbuf));
 
             if (mbuf_empty(mbuf)) {
                 continue;
@@ -741,7 +747,8 @@ msg_send_chain(struct context *ctx, struct conn *conn, struct msg *msg)
             break;
         }
     }
-
+    ASSERT(nsend != 0);
+    ASSERT(!TAILQ_EMPTY(&send_msgq));
     ASSERT(!TAILQ_EMPTY(&send_msgq) && nsend != 0);
 
     conn->smsg = NULL;

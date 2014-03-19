@@ -211,6 +211,7 @@ struct msg {
     unsigned             first_fragment:1;/* first fragment? */
     unsigned             last_fragment:1; /* last fragment? */
     unsigned             swallow:1;       /* swallow response? */
+    unsigned             duplicate:1;       /* duplicate response? */
     unsigned             redis:1;         /* redis? */
 };
 

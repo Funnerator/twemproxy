@@ -631,14 +631,18 @@ server_pool_server(struct server_pool *pool, uint8_t *key, uint32_t keylen)
     case DIST_RANDOM:
         idx = random_dispatch(pool->continuum, pool->ncontinuum, 0);
         break;
-
+    case DIST_DUPLICATE:
+        idx = *key;
+        break;
     default:
         NOT_REACHED();
         return NULL;
     }
+    log_error("idx %i pool size %i", idx, array_n(&pool->server));
     ASSERT(idx < array_n(&pool->server));
 
     server = array_get(&pool->server, idx);
+    log_error("server %.*s", server->pname.len, server->pname.data);
 
     log_debug(LOG_VERB, "key '%.*s' on dist %d maps to server '%.*s'", keylen,
               key, pool->dist_type, server->pname.len, server->pname.data);
@@ -673,6 +677,8 @@ server_pool_conn(struct context *ctx, struct server_pool *pool, uint8_t *key,
 
     status = server_connect(ctx, server, conn);
     if (status != NC_OK) {
+    log_error("server close status not OK");
+
         server_close(ctx, conn);
         return NULL;
     }
@@ -755,6 +761,10 @@ server_pool_run(struct server_pool *pool)
         return modula_update(pool);
 
     case DIST_RANDOM:
+        return random_update(pool);
+
+    // TODO Not sure what needs to change here
+    case DIST_DUPLICATE:
         return random_update(pool);
 
     default:
