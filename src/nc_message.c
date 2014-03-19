@@ -183,6 +183,31 @@ msg_tmo_delete(struct msg *msg)
     log_debug(LOG_VERB, "delete msg %"PRIu64" from tmo rbt", msg->id);
 }
 
+struct msg *
+msg_dup(struct conn *conn, struct msg *msg)
+{
+    log_error("Duplicating %d", msg->id);
+    struct msg *dup_msg = NULL;
+
+    dup_msg = msg_get(conn, msg->request, msg->redis);
+    //struct msg *msg2 = nc_alloc(sizeof(struct msg));
+    memcpy(dup_msg, msg, sizeof(struct msg));
+    rbtree_node_init(&dup_msg->tmo_rbe);
+
+    struct mbuf *mbuf;
+    STAILQ_INIT(&dup_msg->mhdr);
+    STAILQ_FOREACH(mbuf, &msg->mhdr, next) {
+      struct mbuf *mbuf2 = nc_alloc(sizeof(struct mbuf));
+      memcpy(mbuf2, mbuf, sizeof(struct mbuf));
+      mbuf_insert(&dup_msg->mhdr, mbuf2);
+    }
+   // msg2->swallow=1;
+    dup_msg->id = msg_id;
+    dup_msg->duplicate=1;
+
+    return dup_msg;
+}
+
 static struct msg *
 _msg_get(void)
 {

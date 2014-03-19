@@ -231,6 +231,9 @@ bool msg_empty(struct msg *msg);
 rstatus_t msg_recv(struct context *ctx, struct conn *conn);
 rstatus_t msg_send(struct context *ctx, struct conn *conn);
 
+
+struct msg *msg_dup(struct conn *conn, struct msg *msg);
+
 struct msg *req_get(struct conn *conn);
 void req_put(struct msg *msg);
 bool req_done(struct conn *conn, struct msg *msg);

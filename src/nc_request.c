@@ -512,35 +512,16 @@ req_recv_done(struct context *ctx, struct conn *conn, struct msg *msg,
         return;
     }
 
-    log_error("Hereeee in b");
-    struct msg *msg2 = nc_alloc(sizeof(struct msg));
-    memcpy(msg2, msg, sizeof(struct msg));
-
-    rbtree_node_init(&msg2->tmo_rbe);
-    struct mbuf *mbuf;
-    STAILQ_INIT(&msg2->mhdr);
-    STAILQ_FOREACH(mbuf, &msg->mhdr, next) {
-      struct mbuf *mbuf2 = nc_alloc(sizeof(struct mbuf));
-      memcpy(mbuf2, mbuf, sizeof(struct mbuf));
-      mbuf_insert(&msg2->mhdr, mbuf2);
-    }
-   // msg2->swallow=1;
-    msg2->id= 100;
-    msg2->duplicate=1;
-    conn->rmsg = msg2;
-
+    struct msg *dmsg = NULL;
+    dmsg = msg_dup(conn, msg);
+    conn->rmsg = dmsg;
 
     req_forward(ctx, conn, msg);
 
     /* enqueue next message (request), if any */
     conn->rmsg = nmsg;
 
-    if (!req_filter(ctx, conn, msg2))
-      req_forward(ctx, conn, msg2);
-
-    
-
-
+    req_forward(ctx, conn, dmsg);
 }
 
 struct msg *
