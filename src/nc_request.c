@@ -512,15 +512,14 @@ req_recv_done(struct context *ctx, struct conn *conn, struct msg *msg,
         return;
     }
 
-    struct msg *dmsg = NULL;
-    dmsg = msg_dup(conn, msg);
+    /* enqueue next message (request), if any */
+
+    struct msg *dmsg = msg_dup(conn, msg);
     conn->rmsg = dmsg;
 
     req_forward(ctx, conn, msg);
 
-    /* enqueue next message (request), if any */
     conn->rmsg = nmsg;
-
     req_forward(ctx, conn, dmsg);
 }
 
