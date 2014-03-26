@@ -1,7 +1,7 @@
 alpha:
   listen: 127.0.0.1:22121
   hash: fnv1a_64
-  distribution: random
+  distribution: duplicate
   auto_eject_hosts: true
   redis: false
   server_retry_timeout: 2000

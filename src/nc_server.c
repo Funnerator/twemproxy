@@ -632,7 +632,9 @@ server_pool_server(struct server_pool *pool, uint8_t *key, uint32_t keylen)
         idx = random_dispatch(pool->continuum, pool->ncontinuum, 0);
         break;
     case DIST_DUPLICATE:
-        idx = *key;
+        //idx = *key;
+        idx = random_dispatch(pool->continuum, pool->ncontinuum, 0);
+        break;
         break;
     default:
         NOT_REACHED();

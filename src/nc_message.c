@@ -186,7 +186,7 @@ msg_tmo_delete(struct msg *msg)
 struct msg *
 msg_dup(struct conn *conn, struct msg *msg)
 {
-    log_error("Duplicating %d", msg->id);
+    log_debug(LOG_INFO, "Duplicating %d", msg->id);
     struct msg *dup_msg = NULL;
 
     dup_msg = msg_get(conn, msg->request, msg->redis);

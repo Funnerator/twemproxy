@@ -17,6 +17,7 @@
 
 #include <nc_core.h>
 #include <nc_server.h>
+#include <nc_hashkit.h>
 
 struct msg *
 req_get(struct conn *conn)
@@ -507,6 +508,8 @@ req_recv_done(struct context *ctx, struct conn *conn, struct msg *msg,
     ASSERT(conn->rmsg == msg);
     ASSERT(nmsg == NULL || nmsg->request);
 
+    struct msg *dmsg;
+
 
     if (req_filter(ctx, conn, msg)) {
         return;
@@ -514,13 +517,20 @@ req_recv_done(struct context *ctx, struct conn *conn, struct msg *msg,
 
     /* enqueue next message (request), if any */
 
-    struct msg *dmsg = msg_dup(conn, msg);
-    conn->rmsg = dmsg;
+    conn->rmsg = nmsg;
+
+    if (((struct server_pool *)conn->owner)->dist_type == DIST_DUPLICATE) {
+      dmsg = msg_dup(conn, msg);
+      conn->rmsg = dmsg;
+    }
 
     req_forward(ctx, conn, msg);
 
-    conn->rmsg = nmsg;
-    req_forward(ctx, conn, dmsg);
+    if (((struct server_pool *)conn->owner)->dist_type == DIST_DUPLICATE) {
+      conn->rmsg = nmsg;
+      req_forward(ctx, conn, dmsg);
+    }
+
 }
 
 struct msg *
