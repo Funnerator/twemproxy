@@ -293,10 +293,6 @@ rsp_send_next(struct context *ctx, struct conn *conn)
         return NULL;
     }
 
-    log_error("pmsg id %d", pmsg->id);
-    log_error("pmsg swallow %d", pmsg->swallow);
-    log_error("pmsg request %d", pmsg->request);
-
     msg = conn->smsg;
     if (msg != NULL) {
       log_error("msg was not null %d", msg->id);
@@ -310,9 +306,13 @@ rsp_send_next(struct context *ctx, struct conn *conn)
         return NULL;
     }
 
-    log_error("pmsg id %d", pmsg->id);
-    log_error("pmsg swallow %d", pmsg->swallow);
-    log_error("pmsg request %d", pmsg->request);
+    if (pmsg->duplicate) {
+      conn->dequeue_outq(ctx, conn, pmsg);
+      rsp_put(msg);
+
+      conn->smsg = NULL;
+      return NULL;
+    }
 
     ASSERT(pmsg->request && !pmsg->swallow);
 
