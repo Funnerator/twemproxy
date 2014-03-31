@@ -189,6 +189,8 @@ struct msg {
     uint32_t             vlen;            /* value length (memcache) */
     uint8_t              *end;            /* end marker (memcache) */
 
+    uint32_t             dup_idx;         /* dup server index */
+
     uint8_t              *narg_start;     /* narg start (redis) */
     uint8_t              *narg_end;       /* narg end (redis) */
     uint32_t             narg;            /* # arguments (redis) */

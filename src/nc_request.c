@@ -473,7 +473,16 @@ req_forward(struct context *ctx, struct conn *c_conn, struct msg *msg)
         keylen = (uint32_t)(msg->key_end - msg->key_start);
     }
 
-    s_conn = server_pool_conn(ctx, c_conn->owner, key, keylen);
+    if (pool->dist_type == DIST_DUPLICATE) {
+      log_error("forward dup");
+      s_conn = server_pool_conn(ctx, c_conn->owner, NULL, (uint32_t)msg->dup_idx);
+    } else {
+      s_conn = server_pool_conn(ctx, c_conn->owner, key, keylen);
+    }
+
+
+
+
     if (s_conn == NULL) {
         req_forward_error(ctx, c_conn, msg);
         return;
@@ -498,6 +507,36 @@ req_forward(struct context *ctx, struct conn *c_conn, struct msg *msg)
               msg->mlen, msg->type, keylen, key);
 }
 
+static void
+req_dup_forward(struct context *ctx, struct conn *c_conn, struct msg *msg, struct msg *nmsg)
+{
+    struct msg *dmsg = NULL;
+    struct server_pool *pool;
+    uint32_t size, i;
+
+    pool = c_conn->owner;
+    size = array_n(&pool->server);
+    c_conn->rmsg = dmsg;
+
+    dmsg = msg_dup(c_conn, msg);
+
+    c_conn->rmsg = dmsg;
+    msg->dup_idx = 0;
+    req_forward(ctx, c_conn, msg);
+
+    for(i = 1; i < size; i++) {
+      if ( i < size - 2 ) {
+        c_conn->rmsg = msg_dup(c_conn, msg);
+      } else {
+        c_conn->rmsg = nmsg;
+      }
+
+      dmsg->dup_idx = i;
+      req_forward(ctx, c_conn, dmsg);
+      dmsg = c_conn->rmsg;
+    }
+}
+
 void
 req_recv_done(struct context *ctx, struct conn *conn, struct msg *msg,
               struct msg *nmsg)
@@ -508,30 +547,22 @@ req_recv_done(struct context *ctx, struct conn *conn, struct msg *msg,
     ASSERT(conn->rmsg == msg);
     ASSERT(nmsg == NULL || nmsg->request);
 
-    struct msg *dmsg;
-
+    struct server_pool *pool = conn->owner;
 
     if (req_filter(ctx, conn, msg)) {
         return;
     }
 
-    /* enqueue next message (request), if any */
-
-    conn->rmsg = nmsg;
-
-    if (((struct server_pool *)conn->owner)->dist_type == DIST_DUPLICATE) {
-      dmsg = msg_dup(conn, msg);
-      conn->rmsg = dmsg;
-    }
-
-    req_forward(ctx, conn, msg);
-
-    if (((struct server_pool *)conn->owner)->dist_type == DIST_DUPLICATE) {
+    if (pool->dist_type == DIST_DUPLICATE) {
+      req_dup_forward(ctx, conn, msg, nmsg);
+    } else {
+      /* enqueue next message (request), if any */
       conn->rmsg = nmsg;
-      req_forward(ctx, conn, dmsg);
-    }
 
+      req_forward(ctx, conn, msg);
+    }
 }
+
 
 struct msg *
 req_send_next(struct context *ctx, struct conn *conn)
