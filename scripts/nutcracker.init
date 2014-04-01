@@ -6,7 +6,20 @@
 # config: /etc/sysconfig/nutcracker
 
 # Source function library.
-. /etc/rc.d/init.d/functions
+if [[ -f /lib/lsb/init-functions ]]; then
+  . /lib/lsb/init-functions
+elif [[ -f /etc/init.d/functions ]]; then
+  . /etc/init.d/functions
+  # Pretend to be LSB-compliant
+  function start_daemon() {
+    daemon $*
+  }
+else
+  echo "Linux LSB init function script or Redhat /etc/init.d/functions is required for this script."
+  echo "See http://refspecs.linuxfoundation.org/LSB_4.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptfunc.html"
+  exit 1
+fi
+  
 
 USER="nobody"
 OPTIONS="-d -c /etc/nutcracker/nutcracker.yml"
